@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사과게임</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 255, 120, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(120, 255, 120, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 255, 120, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        .game-container.show {
+            display: block;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-menu-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            position: relative;
+        }
+
+        .main-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .score, .time {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .game-canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #gameCanvas {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            cursor: default;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-instructions {
+            text-align: center;
+            font-size: 1em;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .game-over.show {
+            display: flex;
+        }
+
+        .game-over-content {
+            background: white;
+            color: #333;
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-over-title {
+            font-size: 4em;
+            font-weight: bold;
+            color: #ff4757;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            letter-spacing: 3px;
+            animation: gameOverPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes gameOverPulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .final-score {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .game-over-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .score-register-btn {
+            background: linear-gradient(135deg, #FF6B6B 0%, #ee5a52 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .score-register-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 점수 등록 화면 */
+        .score-registration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+        }
+
+        .score-reg-content {
+            background: white;
+            color: #333;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 400px;
+        }
+
+        .score-reg-content h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .score-display {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .name-input-container {
+            margin-bottom: 30px;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            outline: none;
+        }
+
+        .name-input:focus {
+            border-color: #667eea;
+        }
+
+        .register-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .register-btn, .cancel-btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .register-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .cancel-btn {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        .register-btn:hover, .cancel-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 랭킹 보드 */
+        .leaderboard {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1600;
+        }
+
+        .leaderboard-content {
+            background: white;
+            color: #333;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .leaderboard-content h2 {
+            margin-bottom: 30px;
+            color: #667eea;
+            font-size: 2em;
+        }
+
+        .rankings {
+            margin-bottom: 30px;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .ranking-item.top3 {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: white;
+        }
+
+        .ranking-item.top3:nth-child(2) {
+            background: linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%);
+        }
+
+        .ranking-item.top3:nth-child(3) {
+            background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%);
+        }
+
+        .rank-number {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .rank-name {
+            flex: 1;
+            text-align: left;
+            margin-left: 20px;
+            font-size: 1.1em;
+        }
+
+        .rank-score {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .after-register-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .continue-btn, .exit-after-register-btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .continue-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .exit-after-register-btn {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        .continue-btn:hover, .exit-after-register-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 랭킹 보드 선택 버튼들 */
+        .leaderboard-choice-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .game-start-from-leaderboard-btn, .back-to-intro-from-leaderboard-btn {
+            padding: 15px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+
+        .game-start-from-leaderboard-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .back-to-intro-from-leaderboard-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .game-start-from-leaderboard-btn:hover {
+            background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-to-intro-from-leaderboard-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+
+        .selection-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        /* 인트로 화면 스타일 */
+        .intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 255, 120, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(120, 255, 120, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 255, 120, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .intro-title {
+            font-size: 4em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .intro-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* 중앙 사과 버튼 */
+        .center-apple-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .apple-start-button {
+            width: 200px;
+            height: 200px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .apple-start-button:hover {
+            transform: scale(1.1);
+        }
+
+        .apple-body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #ff4444);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .apple-highlight {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            width: 40px;
+            height: 25px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent);
+            border-radius: 50%;
+        }
+
+        .apple-stem {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 25px;
+            background: #8B4513;
+            border-radius: 4px;
+        }
+
+        .apple-leaf {
+            position: absolute;
+            top: -5px;
+            left: 55%;
+            width: 15px;
+            height: 8px;
+            background: #228B22;
+            border-radius: 50% 0;
+            transform: rotate(45deg);
+        }
+
+        .start-text {
+            color: white;
+            font-size: 1.8em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+        }
+
+        /* 게임 방법 설명 */
+        .game-rules {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+        }
+
+        .game-rules h3 {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .rules-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            font-size: 1.1em;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .rule-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .rule-icon {
+            font-size: 1.5em;
+            min-width: 30px;
+        }
+
+        .rule-text {
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        /* 하단 버튼들 */
+        .intro-bottom-buttons {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .intro-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 15px 30px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .intro-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .intro-btn.ranking {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
+        }
+
+        .intro-btn.exit {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .intro-btn.ranking:hover {
+            background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
+        }
+
+        .intro-btn.exit:hover {
+            background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+        }
+
+        /* 음악 제어 */
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: fit-content;
+        }
+
+        .music-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .music-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #volumeSlider {
+            width: 80px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #volumeSlider::-webkit-slider-thumb {
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #volumeSlider::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .intro-content {
+                flex-direction: column;
+                gap: 40px;
+            }
+            
+            .intro-title {
+                font-size: 2.5em;
+            }
+
+            .intro-bottom-buttons {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .music-controls {
+                align-self: flex-start;
+                margin-top: 10px;
+            }
+
+            .intro-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            .main-menu-btn {
+                font-size: 0.9em;
+                padding: 8px 15px;
+            }
+            
+            .apple-start-button {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .start-text {
+                font-size: 1.4em;
+            }
+            
+            .game-rules {
+                max-width: 300px;
+            }
+            
+            .intro-bottom-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .music-controls {
+                width: 100%;
+                max-width: 200px;
+                justify-content: space-between;
+                padding: 8px 12px;
+            }
+
+            .music-btn {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+            
+            #volumeSlider {
+                width: 60px;
+            }
+        }
+
+        /* 인게임 확인 창 스타일 */
+        .confirm-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .confirm-dialog.show {
+            display: flex;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .confirm-content {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .confirm-title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .confirm-message {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 80px;
+        }
+
+        .confirm-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .confirm-yes:hover {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .confirm-no:hover {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: scale(0.8) translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 480px) {
+            .confirm-content {
+                padding: 30px 20px;
+            }
+
+            .confirm-title {
+                font-size: 1.5em;
+            }
+
+            .confirm-message {
+                font-size: 1em;
+            }
+
+            .confirm-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .confirm-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">🍎 사과게임</h1>
+            <button class="main-menu-btn" onclick="goToMainMenu()">메인 화면으로 가기</button>
+        </div>
+        
+        <div class="game-info">
+            <div class="score">점수: <span id="score">0</span></div>
+            <div class="time">시간: <span id="time">60</span>초</div>
+        </div>
+
+        <div class="game-canvas-container">
+            <canvas id="gameCanvas" width="600" height="320"></canvas>
+        </div>
+
+        <div class="selection-info">
+            <div>선택된 사과: <span id="selectedCount">0</span>개</div>
+            <div>합계: <span id="sumDisplay">0</span></div>
+        </div>
+
+        <div class="game-instructions">
+            <p>마우스로 드래그하여 사과를 선택하세요!</p>
+            <p>선택한 사과들의 숫자 합이 10이 되어야 합니다.</p>
+            <p>조건을 만족하면 사과가 제거되고 점수를 얻습니다.</p>
+        </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+            <div class="game-over-title">GAMEOVER</div>
+            <div class="final-score">총 점수: <span id="finalScore">0</span>점</div>
+            <div class="game-over-buttons">
+                <button class="restart-btn" onclick="restartGame()">게임 다시 시작</button>
+                <button class="score-register-btn" onclick="showScoreRegistration()">점수 등록하기</button>
+                <button class="restart-btn" onclick="backToIntroFromGameOver()">인트로로 가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 점수 등록 화면 -->
+    <div class="score-registration" id="scoreRegistration">
+        <div class="score-reg-content">
+            <h2>점수 등록</h2>
+            <div class="score-display">점수: <span id="registerScore">0</span>점</div>
+            <div class="name-input-container">
+                <input type="text" id="playerName" placeholder="이름을 입력하세요 (최대 8자)" maxlength="8" class="name-input">
+            </div>
+            <div class="register-buttons">
+                <button class="register-btn" onclick="registerScore()">등록</button>
+                <button class="cancel-btn" onclick="hideScoreRegistration()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 랭킹 보드 -->
+    <div class="leaderboard" id="leaderboard">
+        <div class="leaderboard-content">
+            <h2>🏆 랭킹 보드</h2>
+            <div class="rankings" id="rankings">
+                <!-- 랭킹 목록이 여기에 표시됩니다 -->
+            </div>
+            <div class="after-register-buttons">
+                <button class="continue-btn" onclick="continueAfterRegister()">게임 계속하기</button>
+                <button class="exit-after-register-btn" onclick="exitAfterRegister()">나가기</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 인트로 화면 -->
+    <div class="intro-screen" id="introScreen">
+        <div class="intro-title">🍎 사과게임</div>
+        
+        <div class="intro-content">
+            <!-- 중앙 사과 버튼 -->
+            <div class="center-apple-container">
+                <div class="apple-start-button" onclick="event.stopPropagation(); startGame();">
+                    <div class="apple-body" style="pointer-events: none;">
+                        <div class="apple-highlight" style="pointer-events: none;"></div>
+                        <div class="apple-stem" style="pointer-events: none;"></div>
+                        <div class="apple-leaf" style="pointer-events: none;"></div>
+                        <div class="start-text" style="pointer-events: none;">START</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 게임 방법 설명 -->
+            <div class="game-rules">
+                <h3>🎮 게임 방법</h3>
+                <div class="rules-content">
+                    <div class="rule-item">
+                        <span class="rule-icon">🖱️</span>
+                        <span class="rule-text">마우스로 드래그하여 사과 선택</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-icon">🔢</span>
+                        <span class="rule-text">선택한 사과들의 숫자 합이 10이 되어야 함</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-icon">⏰</span>
+                        <span class="rule-text">1분 안에 최대한 많은 점수 획득</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-icon">🏆</span>
+                        <span class="rule-text">점수 = 선택한 사과 개수</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 하단 버튼들 -->
+        <div class="intro-bottom-buttons">
+            <button class="intro-btn ranking" onclick="showLeaderboardFromIntro()">🏆 랭킹 보기</button>
+            <button class="intro-btn exit" onclick="exitGame()">게임 나가기</button>
+            
+            <!-- 음악 제어 버튼 -->
+            <div class="music-controls">
+                <button class="music-btn" id="musicToggle" onclick="toggleMusic()">🔊 음악 ON</button>
+                <input type="range" id="volumeSlider" min="0" max="100" value="30" onchange="changeVolume(this.value)">
+            </div>
+        </div>
+    </div>
+
+    <!-- 인게임 확인 창 -->
+    <div class="confirm-dialog" id="confirmDialog">
+        <div class="confirm-content">
+            <div class="confirm-title">게임 중단</div>
+            <div class="confirm-message">게임을 중단하고 메인 화면으로 돌아가시겠습니까?</div>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-yes" onclick="confirmMainMenu(true)">예</button>
+                <button class="confirm-btn confirm-no" onclick="confirmMainMenu(false)">아니오</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 배경음악 -->
+    <audio id="bgMusic" preload="auto" loop>
+        <source src="플래시 번쩍.mp3" type="audio/mpeg">
+        <!-- 브라우저가 mp3를 지원하지 않는 경우를 위한 메시지 -->
+        Your browser does not support the audio element.
+    </audio>
+
+    <script src="game.js"></script>
+</body>
+</html>
